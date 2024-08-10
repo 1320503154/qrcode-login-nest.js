@@ -1,0 +1,50 @@
+<!DOCTYPE html> <!-- 声明文档类型为 HTML5 -->
+<html lang="en"> <!-- 设置文档的语言为英语 -->
+
+<head>
+    <meta charset="UTF-8"> <!-- 设置字符编码为 UTF-8 -->
+    <title>扫码登录</title> <!-- 页面标题 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 设置视口以适应不同设备 -->
+    <script src="https://unpkg.com/axios@1.5.0/dist/axios.min.js"></script> <!-- 引入 Axios 库用于发送 HTTP 请求 -->
+</head>
+
+<body>
+    <img id="img" src="" alt="" /> <!-- 显示二维码图像的 img 元素 -->
+    <div id="info"></div> <!-- 用于显示二维码状态的 div 元素 -->
+    <script>
+        // 发送 GET 请求生成二维码
+        axios.get('http://localhost:3000/qrcode/generate').then(res => {
+            // 将响应中的二维码图像 URL 设置为 img 元素的 src 属性
+            document.getElementById('img').src = res.data.img;
+
+            // 查询二维码状态
+            queryStatus(res.data.qrcode_id);
+        })
+
+        // 查询二维码状态的函数
+        function queryStatus(id) {
+            // 发送 GET 请求检查二维码的状态
+            axios.get('http://localhost:3000/qrcode/check?id=' + id).then(res => {
+                const status = res.data.status; // 获取状态
+
+                let content = ''; // 初始化内容变量
+                // 根据状态设置内容
+                switch (status) {
+                    case 'noscan': content = '未扫码'; break; // 未扫码
+                    case 'scan-wait-confirm': content = '已扫码，等待确认'; break; // 已扫码，等待确认
+                    case 'scan-confirm': content = '已确认'; break; // 已确认
+                    case 'scan-cancel': content = '已取消'; break; // 已取消
+                }
+                // 将内容显示在 info div 中
+                document.getElementById('info').textContent = content;
+
+                // 如果状态为未扫码或等待确认，则每秒查询一次状态
+                if (status === 'noscan' || status === 'scan-wait-confirm') {
+                    setTimeout(() => queryStatus(id), 1000); // 每隔 1000 毫秒重复查询
+                }
+            })
+        }
+    </script>
+</body>
+
+</html>
