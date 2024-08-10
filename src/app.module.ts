@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { JwtModule } from '@nestjs/jwt';
+
+import { QrCodeService } from './qrcode/qrcode.service';
+import { AuthService } from './auth/auth.service';
+
 @Module({
   imports: [
     JwtModule.register({
@@ -9,6 +13,6 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, QrCodeService, AuthService],
 })
 export class AppModule {}
