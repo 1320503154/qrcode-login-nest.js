@@ -37,8 +37,8 @@ export class AppController {
   }
 
   @Get('qrcode/confirm')
-  async confirm(@Query('id') id: string) {
-    return this.qrCodeService.confirmQrCode(id);
+  async confirm(@Query('id') id: string,@Headers('Authorization') auth: string) {
+    return this.qrCodeService.confirmQrCode(id,auth);
   }
 
   @Get('qrcode/cancel')

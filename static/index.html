@@ -26,13 +26,13 @@
             // 发送 GET 请求检查二维码的状态
             axios.get('http://localhost:3000/qrcode/check?id=' + id).then(res => {
                 const status = res.data.status; // 获取状态
-
+                const userInfo = res.data.userInfo; // 获取用户信息
                 let content = ''; // 初始化内容变量
                 // 根据状态设置内容
                 switch (status) {
                     case 'noscan': content = '未扫码'; break; // 未扫码
                     case 'scan-wait-confirm': content = '已扫码，等待确认'; break; // 已扫码，等待确认
-                    case 'scan-confirm': content = '已确认'; break; // 已确认
+                    case 'scan-confirm': content = '已确认,当前登录用户:' + userInfo.username; break; // 已确认
                     case 'scan-cancel': content = '已取消'; break; // 已取消
                 }
                 // 将内容显示在 info div 中

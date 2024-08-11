@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
@@ -7,56 +7,119 @@
     <title>扫码登录确认</title>
     <script src="https://unpkg.com/axios@1.5.0/dist/axios.min.js"></script>
     <style>
-        #info {
-            height: 400px;
-            line-height: 400px;
-            font-size: 20px;
-            padding: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
 
-        #confirm,
-        #cancel {
-            display: block;
-            width: 80%;
-            line-height: 40px;
+        #info {
             font-size: 20px;
             margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .button {
+            display: block;
+            width: 200px;
+            line-height: 40px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
 
         #confirm {
-            background: skyblue;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #cancel {
+            background-color: #f44336;
+            color: white;
+        }
+
+        #Li,
+        #Tao {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .button:hover {
+            opacity: 0.8;
+        }
+
+        #token {
+            margin-top: 20px;
+            word-break: break-all;
+            max-width: 300px;
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
-    <div id="info">
-        是否确认登录 xxx 网站？
-    </div>
-    <button id="confirm">确认登录</button>
-    <button id="cancel">取消</button>
+    <div id="info">是否确认登录 xxx 网站？</div>
+    <button id="confirm" class="button">确认登录</button>
+    <button id="cancel" class="button">取消</button>
+    <button id="Li" class="button">登录david_Li的账号</button>
+    <button id="Tao" class="button">登录david_Tao的账号</button>
+    <div id="token"></div>
 
     <script>
-        const baseURL = `192.168.10.207`
-        const params = new URLSearchParams(window.location.search.slice(1));
+        const baseURL = '192.168.10.207';
+        const id = new URLSearchParams(window.location.search).get('id');
+        let token = '';
 
-        const id = params.get(`id`);
-
-        axios.get(`http://${baseURL}:3000/qrcode/scan?id=` + id).catch(e => {
-            alert(`二维码已过期`);
+        const api = axios.create({
+            baseURL: `http://${baseURL}:3000`,
+            timeout: 5000
         });
 
-        document.getElementById(`confirm`).addEventListener(`click`, () => {
-            axios.get(`http://${baseURL}:3000/qrcode/confirm?id=` + id).catch(e => {
-                alert(`二维码已过期`);
+        function showError(message) {
+            alert(message || '操作失败，请重试');
+        }
+
+        function updateToken(newToken) {
+            token = newToken;
+            document.getElementById('token').textContent = token;
+        }
+
+        async function handleRequest(url, options = {}) {
+            try {
+                const response = await api.get(url, options);
+                return response.data;
+            } catch (error) {
+                showError(error.response?.data?.message || '二维码已过期');
+                throw error;
+            }
+        }
+
+        async function handleLogin(username, password) {
+            const data = await handleRequest('/login', { params: { username, password } });
+            updateToken(data.token);
+        }
+
+        document.getElementById('Li').addEventListener('click', () => handleLogin('admin', 'admin'));
+        document.getElementById('Tao').addEventListener('click', () => handleLogin('user', 'user'));
+
+        document.getElementById('confirm').addEventListener('click', async () => {
+            await handleRequest(`/qrcode/confirm?id=${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
         });
 
-        document.getElementById(`cancel`).addEventListener(`click`, () => {
-            axios.get(`http://${baseURL}:3000/qrcode/cancel?id=` + id).catch(e => {
-                alert(`二维码已过期`);
-            });
-        });
+        document.getElementById('cancel').addEventListener('click', () => handleRequest(`/qrcode/cancel?id=${id}`));
+
+        // 初始化扫描
+        handleRequest(`/qrcode/scan?id=${id}`);
     </script>
 </body>
 
